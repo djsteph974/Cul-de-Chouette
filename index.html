@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lancer de Dés 3D - Cul De Chouette !</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #120a06;
+            user-select: none;
+        }
+
+        #renderCanvas {
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+            display: block;
+        }
+
+        #titleHeader {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+            width: 95vw;
+        }
+
+        .game-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 7vw;
+            font-weight: 700;
+            color: #e6c594;
+            text-shadow: 0 3px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(184, 134, 11, 0.4);
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .game-title span {
+            color: #e6c594;
+        }
+
+        #resultDisplay {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+            width: 90vw;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 4vw;
+            font-weight: 700;
+            color: #e6c594;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 10px rgba(184, 134, 11, 0.3);
+            background: rgba(18, 10, 6, 0.75);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(230, 197, 148, 0.3);
+            white-space: pre-line;
+        }
+    </style>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+</head>
+<body>
+
+    <div id="titleHeader">
+        <h1 class="game-title">Cul De <span>Chouette !</span></h1>
+    </div>
+
+    <div id="resultDisplay">Lancez les dés !</div>
+
+    <canvas id="renderCanvas"></canvas>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById("renderCanvas");
+            const engine = new BABYLON.Engine(canvas, true);
+            const resultDisplay = document.getElementById("resultDisplay");
+
+            let audioCtx = null;
+
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+
+            function playDiceImpact() {
+                try {
+                    initAudio();
+                    if (!audioCtx) return;
+
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.15);
+
+                    gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
+                } catch (e) {}
+            }
+
+            const createScene = function () {
+                const scene = new BABYLON.Scene(engine);
+                scene.clearColor = new BABYLON.Color3(0.08, 0.05, 0.03);
+
+                const camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.1, 21, BABYLON.Vector3.Zero(), scene);
+                
+                const light = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(-1, -2.5, -1), scene);
+                light.position = new BABYLON.Vector3(10, 20, 10);
+                light.intensity = 1.5;
+
+                const shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+                shadowGenerator.useBlurExponentialShadowMap = true;
+                shadowGenerator.blurKernel = 32;
+
+                const ambientLight = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
+                ambientLight.intensity = 0.4;
+
+                scene.enablePhysics(new BABYLON.Vector3(0, -25, 0), new BABYLON.CannonJSPlugin());
+
+                function createWoodTexture(name, baseColorHex, grainColorHex) {
+                    const dynTex = new BABYLON.DynamicTexture(name + "Tex", 1024, scene, true);
+                    const ctx = dynTex.getContext();
+
+                    ctx.fillStyle = baseColorHex;
+                    ctx.fillRect(0, 0, 1024, 1024);
+                    
+                    ctx.strokeStyle = grainColorHex;
+                    ctx.lineWidth = 3;
+                    for (let i = 0; i < 300; i++) {
+                        ctx.beginPath();
+                        let x = Math.random() * 1024;
+                        ctx.moveTo(x, 0);
+                        ctx.bezierCurveTo(x + Math.sin(i) * 100, 300, x - Math.cos(i) * 100, 700, x + (Math.random() - 0.5) * 150, 1024);
+                        ctx.globalAlpha = 0.07;
+                        ctx.stroke();
+                    }
+                    dynTex.update();
+                    
+                    const mat = new BABYLON.StandardMaterial(name, scene);
+                    mat.diffuseTexture = dynTex;
+                    mat.specularPower = 32;
+                    mat.specularColor = new BABYLON.Color3(0.2, 0.15, 0.1);
+                    return mat;
+                }
+
+                const trayMat = createWoodTexture("trayMat", "#3b2211", "#1d1007");
+
+                const traySize = 9.5;
+                const ground = BABYLON.MeshBuilder.CreateBox("ground", { width: traySize, height: 0.4, depth: traySize }, scene);
+                ground.position.y = -0.2;
+                ground.material = trayMat;
+                ground.receiveShadows = true;
+                ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.3 }, scene);
+
+                function makeWall(x, z, w, d) {
+                    const wallHeight = 4.0;
+                    const wall = BABYLON.MeshBuilder.CreateBox("wall", { width: w, height: wallHeight, depth: d }, scene);
+                    wall.position.set(x, wallHeight / 2 - 0.2, z);
+                    wall.material = trayMat;
+                    wall.receiveShadows = true;
+                    wall.physicsImpostor = new BABYLON.PhysicsImpostor(wall, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.7, friction: 0.2 }, scene);
+                }
+                const wallMargin = traySize / 2 + 0.4;
+                makeWall(0, -wallMargin, traySize + 1.2, 0.8);
+                makeWall(0, wallMargin, traySize + 1.2, 0.8);
+                makeWall(-wallMargin, 0, 0.8, traySize);
+                makeWall(wallMargin, 0, 0.8, traySize);
+
+                function createFaceTexture(number, isGrey) {
+                    const dynTex = new BABYLON.DynamicTexture("faceTex" + number + "_" + isGrey, 512, scene, true);
+                    const ctx = dynTex.getContext();
+
+                    ctx.fillStyle = isGrey ? '#6d6f71' : '#c89d70';
+                    ctx.fillRect(0, 0, 512, 512);
+
+                    const dotColor = isGrey ? '#1a1a1a' : '#221207';
+                    const shadowColor = isGrey ? '#9b9d9f' : '#edd0b0';
+                    
+                    const r = 38;
+                    const pos = {
+                        1: [[256, 256]],
+                        2: [[130, 130], [382, 382]],
+                        3: [[130, 130], [256, 256], [382, 382]],
+                        4: [[130, 130], [382, 130], [130, 382], [382, 382]],
+                        5: [[130, 130], [382, 130], [256, 256], [130, 382], [382, 382]],
+                        6: [[130, 130], [382, 130], [130, 256], [382, 256], [130, 382], [382, 382]]
+                    };
+
+                    if (pos[number]) {
+                        pos[number].forEach(([x, y]) => {
+                            ctx.fillStyle = shadowColor;
+                            ctx.beginPath();
+                            ctx.arc(x + 4, y + 4, r, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            ctx.fillStyle = dotColor;
+                            ctx.beginPath();
+                            ctx.arc(x, y, r, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+                    }
+                    dynTex.update();
+                    return dynTex;
+                }
+
+                const faceMapping = [
+                    { num: 1, normal: new BABYLON.Vector3(0, 0, 1) },  
+                    { num: 6, normal: new BABYLON.Vector3(0, 0, -1) }, 
+                    { num: 2, normal: new BABYLON.Vector3(1, 0, 0) },  
+                    { num: 5, normal: new BABYLON.Vector3(-1, 0, 0) }, 
+                    { num: 3, normal: new BABYLON.Vector3(0, 1, 0) },  
+                    { num: 4, normal: new BABYLON.Vector3(0, -1, 0) }  
+                ];
+
+                function createDiceMultiMat(isGrey) {
+                    const multiMat = new BABYLON.MultiMaterial("multi" + (isGrey ? "Grey" : "Wood"), scene);
+                    
+                    faceMapping.forEach(f => {
+                        const mat = new BABYLON.StandardMaterial("m" + f.num + (isGrey ? "G" : "W"), scene);
+                        mat.diffuseTexture = createFaceTexture(f.num, isGrey);
+                        mat.specularPower = 64;
+                        mat.specularColor = new BABYLON.Color3(0.15, 0.15, 0.15);
+                        multiMat.subMaterials.push(mat);
+                    });
+                    return multiMat;
+                }
+
+                const woodMultiMat = createDiceMultiMat(false);
+                const greyMultiMat = createDiceMultiMat(true);
+
+                const diceSize = 1.2;
+                const diceList = [];
+
+                function spawnDie(isGrey, x, initialRotation = BABYLON.Vector3.Zero()) {
+                    const subdivisions = 12;
+                    const die = BABYLON.MeshBuilder.CreateBox("die", {
+                        size: diceSize,
+                        widthSubdivisions: subdivisions,
+                        heightSubdivisions: subdivisions,
+                        depthSubdivisions: subdivisions
+                    }, scene);
+
+                    const positions = die.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+                    const half = diceSize / 2;
+                    const threshold = half - 0.15;
+
+                    for (let i = 0; i < positions.length; i += 3) {
+                        let px = positions[i];
+                        let py = positions[i + 1];
+                        let pz = positions[i + 2];
+
+                        let ax = Math.abs(px);
+                        let ay = Math.abs(py);
+                        let az = Math.abs(pz);
+
+                        let countNear = (ax > threshold ? 1 : 0) + (ay > threshold ? 1 : 0) + (az > threshold ? 1 : 0);
+                        if (countNear >= 2) {
+                            positions[i] = px * 0.83;
+                            positions[i + 1] = py * 0.83;
+                            positions[i + 2] = pz * 0.83;
+                        }
+                    }
+
+                    die.setVerticesData(BABYLON.VertexBuffer.PositionKind, positions);
+                    die.createNormals(true);
+
+                    die.material = isGrey ? greyMultiMat : woodMultiMat;
+                    die.isPickable = true;
+                    shadowGenerator.addShadowCaster(die);
+
+                    die.subMeshes = [];
+                    const verticesCount = die.getTotalVertices();
+                    const indexCountPerFace = die.getIndices().length / 6;
+
+                    for (let face = 0; face < 6; face++) {
+                        new BABYLON.SubMesh(face, 0, verticesCount, face * indexCountPerFace, indexCountPerFace, die);
+                    }
+
+                    die.position.set(x, 0.6, 0);
+                    die.rotation = initialRotation;
+
+                    die.physicsImpostor = new BABYLON.PhysicsImpostor(
+                        die, 
+                        BABYLON.PhysicsImpostor.BoxImpostor, 
+                        { mass: 1, restitution: 0.4, friction: 0.4 }, 
+                        scene
+                    );
+
+                    die.physicsImpostor.onCollideEvent = () => {
+                        playDiceImpact();
+                    };
+
+                    diceList.push(die);
+                }
+
+                const rotForSix = new BABYLON.Vector3(-Math.PI / 2, 0, 0);
+
+                // Au démarrage, on ne crée QUE les deux dés blancs sur le plateau
+                spawnDie(false, -2, rotForSix);
+                spawnDie(false, 2, rotForSix);
+                // Le dé gris (index 2) ne sera instancié qu'au 2e tapotement
+
+                function getTopFace(die) {
+                    let maxDot = -999;
+                    let topNum = 1;
+
+                    faceMapping.forEach(f => {
+                        const worldNormal = BABYLON.Vector3.TransformNormal(f.normal, die.getWorldMatrix()).normalize();
+                        const dot = BABYLON.Vector3.Dot(worldNormal, BABYLON.Vector3.Up());
+                        if (dot > maxDot) {
+                            maxDot = dot;
+                            topNum = f.num;
+                        }
+                    });
+
+                    return topNum;
+                }
+
+                let gameStep = 0; // 0 = Prêt, 1 = Blancs lancés, 2 = Gris lancé (complet)
+
+                function updateCombinationResult() {
+                    if (gameStep !== 2 || diceList.length < 3) return;
+
+                    const d1 = getTopFace(diceList[0]);
+                    const d2 = getTopFace(diceList[1]);
+                    const d3 = getTopFace(diceList[2]);
+
+                    const sorted = [d1, d2, d3].sort((x, y) => x - y);
+                    const [s1, s2, s3] = sorted;
+
+                    if (s1 === s2 && s2 === s3) {
+                        resultDisplay.textContent = `Cul de Chouette (${d1}-${d2}-${d3})`;
+                        return;
+                    }
+
+                    if (s1 === 1 && s2 === 2 && s3 === 4) {
+                        resultDisplay.textContent = `Souflette (${d1}-${d2}-${d3})`;
+                        return;
+                    }
+
+                    let cvFound = false;
+                    if ((d1 === d2 && d1 + d2 === d3) || (d1 === d3 && d1 + d3 === d2) || (d2 === d3 && d2 + d3 === d1)) {
+                        cvFound = true;
+                    }
+
+                    if (cvFound) {
+                        resultDisplay.textContent = `Velute & Chouette Velute (${d1}-${d2}-${d3})`;
+                        return;
+                    }
+
+                    if (s2 === s1 + 1 && s3 === s2 + 1) {
+                        resultDisplay.textContent = `Suite (${d1}-${d2}-${d3})`;
+                        return;
+                    }
+
+                    if (s1 + s2 === s3) {
+                        resultDisplay.textContent = `Velute (${d1}-${d2}-${d3})`;
+                        return;
+                    }
+
+                    if (d1 === d2 || d1 === d3 || d2 === d3) {
+                        resultDisplay.textContent = `Chouette (${d1}-${d2}-${d3})\nTenter le Cul de Chouette ?`;
+                        return;
+                    }
+
+                    resultDisplay.textContent = `Néant (${d1}-${d2}-${d3})`;
+                }
+
+                function rollWhiteDice() {
+                    playDiceImpact();
+                    resultDisplay.textContent = "LANCER DES BLANCS EN COURS...";
+                    [diceList[0], diceList[1]].forEach((die, i) => {
+                        die.position.set(3.8, 3.0 + Math.random() * 0.5, (i === 0 ? -1 : 1) * 1.5);
+                        die.physicsImpostor.setLinearVelocity(new BABYLON.Vector3(-14 - Math.random() * 4, -4, (Math.random() - 0.5) * 5));
+                        die.physicsImpostor.setAngularVelocity(new BABYLON.Vector3(Math.random() * 30 - 15, Math.random() * 30 - 15, Math.random() * 30 - 15));
+                    });
+                }
+
+                function rollGreyDie() {
+                    playDiceImpact();
+                    resultDisplay.textContent = "LANCER DU DÉ GRIS EN COURS...";
+                    
+                    // Si le dé gris n'existe pas encore dans le tableau, on le crée maintenant !
+                    if (diceList.length < 3) {
+                        spawnDie(true, 3.8, rotForSix);
+                    }
+
+                    const die = diceList[2];
+                    die.position.set(3.8, 3.0 + Math.random() * 0.5, (Math.random() - 0.5) * 1);
+                    die.physicsImpostor.setLinearVelocity(new BABYLON.Vector3(-14 - Math.random() * 4, -4, (Math.random() - 0.5) * 5));
+                    die.physicsImpostor.setAngularVelocity(new BABYLON.Vector3(Math.random() * 30 - 15, Math.random() * 30 - 15, Math.random() * 30 - 15));
+                }
+
+                function clearBoard() {
+                    resultDisplay.textContent = "Lancez les dés !";
+                    // On supprime et nettoie le dé gris s'il existe pour qu'il disparaisse complètement
+                    if (diceList.length >= 3) {
+                        diceList[2].dispose();
+                        diceList.pop();
+                    }
+                    // On cache/met en sécurité les dés blancs hors du plateau
+                    [diceList[0], diceList[1]].forEach(die => {
+                        die.position.set(0, -20, 0);
+                        if (die.physicsImpostor) {
+                            die.physicsImpostor.setLinearVelocity(BABYLON.Vector3.Zero());
+                            die.physicsImpostor.setAngularVelocity(BABYLON.Vector3.Zero());
+                        }
+                    });
+                }
+
+                let checkTimeout = null;
+                scene.registerBeforeRender(() => {
+                    diceList.forEach((die) => {
+                        if (gameStep > 0 && (die.position.y < -2 || Math.abs(die.position.x) > traySize / 2 + 1 || Math.abs(die.position.z) > traySize / 2 + 1)) {
+                            die.position.set(0, 1.5, 0);
+                            if (die.physicsImpostor) {
+                                die.physicsImpostor.setLinearVelocity(BABYLON.Vector3.Zero());
+                                die.physicsImpostor.setAngularVelocity(BABYLON.Vector3.Zero());
+                            }
+                        }
+                    });
+
+                    if (gameStep !== 2 || diceList.length < 3) return;
+
+                    let allStopped = true;
+                    diceList.forEach((die) => {
+                        if (die.physicsImpostor) {
+                            const linVel = die.physicsImpostor.getLinearVelocity();
+                            const angVel = die.physicsImpostor.getAngularVelocity();
+                            
+                            if (linVel && angVel) {
+                                if (linVel.length() > 0.3 || angVel.length() > 0.3) {
+                                    allStopped = false;
+                                }
+                            }
+                        }
+                    });
+
+                    if (allStopped) {
+                        if (!checkTimeout) {
+                            checkTimeout = setTimeout(() => {
+                                updateCombinationResult();
+                                checkTimeout = null;
+                            }, 500);
+                        }
+                    } else {
+                        if (checkTimeout) {
+                            clearTimeout(checkTimeout);
+                            checkTimeout = null;
+                        }
+                    }
+                });
+
+                scene.onPointerDown = (evt, pickResult) => {
+                    const pickInfo = scene.pick(scene.pointerX, scene.pointerY);
+
+                    if (pickInfo.hit && pickInfo.pickedMesh) {
+                        const clickedMesh = pickInfo.pickedMesh;
+                        const foundDieIndex = diceList.findIndex(d => d === clickedMesh);
+
+                        if (foundDieIndex !== -1) {
+                            // Tapoter directement un dé 3D relance ce dé ou les blancs
+                            if (foundDieIndex === 2) {
+                                rollGreyDie();
+                            } else {
+                                rollWhiteDice();
+                            }
+                            return;
+                        }
+                    }
+
+                    // Tapotement du plateau / vide
+                    if (gameStep === 0) {
+                        rollWhiteDice();
+                        gameStep = 1;
+                    } else if (gameStep === 1) {
+                        rollGreyDie();
+                        gameStep = 2;
+                    } else if (gameStep === 2) {
+                        clearBoard();
+                        gameStep = 0;
+                    }
+                };
+
+                return scene;
+            };
+
+            const scene = createScene();
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
+
+            window.addEventListener("resize", () => {
+                engine.resize();
+            });
+        });
+    </script>
+</body>
+</html>
