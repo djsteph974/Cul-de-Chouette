@@ -386,9 +386,9 @@
                     if (gameStep === 5) {
                         if (s1 === s2 && s2 === s3) {
                             const pts = getCulDeChouettePoints(s1);
-                            resultDisplay.textContent = `CUL DE CHOUETTE RÉUSSI ! 🎉 (${d1}-${d2}-${d3})\n+${pts} pts`;
+                            resultDisplay.textContent = `SIROTAGE RÉUSSI ! 🎉 (${d1}-${d2}-${d3})\n+${pts} pts`;
                         } else {
-                            resultDisplay.textContent = `Tentative échouée ! ❌ (${d1}-${d2}-${d3})\nVous perdez votre Chouette (0 pt)`;
+                            resultDisplay.textContent = `Sirotage échoué ! ❌ (${d1}-${d2}-${d3})\nVous perdez votre Chouette (0 pt)`;
                         }
                         gameStep = 3; // Fin du tour
                         dieToReRollIndex = -1;
@@ -404,7 +404,7 @@
                     }
 
                     if (s1 === 1 && s2 === 2 && s3 === 4) {
-                        resultDisplay.textContent = `Souflette (${d1}-${d2}-${d3})`;
+                        resultDisplay.textContent = `Souflette (${d1}-${d2}-${d3})\n 👉 En garde ma mignonne !`;
                         gameStep = 3;
                         return;
                     }
@@ -417,7 +417,7 @@
 
                     if (cvFound) {
                         const pts = getVelutePoints(cvSum);
-                        resultDisplay.textContent = `Chouette-Velute (${d1}-${d2}-${d3})\n Pas mou le caillou ! (+${pts} pts)`;
+                        resultDisplay.textContent = `Chouette-Velute (${d1}-${d2}-${d3})\n 👏Pas mou le caillou ! Le 1er gagne(+${pts} pts)`;
                         gameStep = 3;
                         return;
                     }
@@ -429,7 +429,7 @@
                             const velPts = getVelutePoints(3);
                             scoreText = `-10 pts et Velute (+${velPts} pts)`;
                         }
-                        resultDisplay.textContent = `Suite${isVelute123 ? " & Velute" : ""} (${d1}-${d2}-${d3})\n Grelotte ça picote ! (${scoreText})`;
+                        resultDisplay.textContent = `Suite${isVelute123 ? " & Velute" : ""} (${d1}-${d2}-${d3})\n ✊ Grelotte ça picote ! Le dernier perd (${scoreText})`;
                         gameStep = 3;
                         return;
                     }
@@ -452,12 +452,12 @@
                         const pts = getChouettePoints(pairVal);
                         dieToReRollIndex = getDifferentDieIndex(d1, d2, d3);
                         
-                        resultDisplay.textContent = `Chouette (${d1}-${d2}-${d3}) : ${pts} pts\nCliquez pour tenter le Cul de Chouette !`;
+                        resultDisplay.textContent = `Chouette (${d1}-${d2}-${d3}) : ${pts} pts\nTenter un sirotage ?`;
                         gameStep = 4; // Attente de la tentative
                         return;
                     }
 
-                    resultDisplay.textContent = `Néant (${d1}-${d2}-${d3})`;
+                    resultDisplay.textContent = `Néant (${d1}-${d2}-${d3})\nVous obtenez une grelottine si votre score est de minimum 30 pts`;
                     gameStep = 3;
                 }
 
