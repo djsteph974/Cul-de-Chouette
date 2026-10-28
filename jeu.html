@@ -52,7 +52,6 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
-            pointer-events: none;
             text-align: center;
             width: 90vw;
             font-family: 'Cinzel Decorative', serif;
@@ -65,6 +64,37 @@
             border-radius: 12px;
             border: 1px solid rgba(230, 197, 148, 0.3);
             white-space: pre-line;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+        }
+
+        .btn-sirotage {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 2.5vw;
+            font-weight: bold;
+            padding: 8px 24px;
+            border-radius: 8px;
+            border: 2px solid #e6c594;
+            background: #3b2211;
+            color: #e6c594;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+        }
+
+        .btn-sirotage:hover {
+            background: #e6c594;
+            color: #120a06;
+            transform: scale(1.05);
         }
     </style>
 
@@ -77,7 +107,13 @@
         <h1 class="game-title">Cul De <span>Chouette !</span></h1>
     </div>
 
-    <div id="resultDisplay">Lancez les dés !</div>
+    <div id="resultDisplay">
+        <span id="resultText">Lancez les dés !</span>
+        <div id="sirotageButtons" class="button-container" style="display: none;">
+            <button id="btnYes" class="btn-sirotage">Oui</button>
+            <button id="btnNo" class="btn-sirotage">Non</button>
+        </div>
+    </div>
 
     <canvas id="renderCanvas"></canvas>
 
@@ -85,7 +121,10 @@
         window.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById("renderCanvas");
             const engine = new BABYLON.Engine(canvas, true);
-            const resultDisplay = document.getElementById("resultDisplay");
+            const resultText = document.getElementById("resultText");
+            const sirotageButtons = document.getElementById("sirotageButtons");
+            const btnYes = document.getElementById("btnYes");
+            const btnNo = document.getElementById("btnNo");
 
             let audioCtx = null;
 
@@ -337,18 +376,9 @@
                     return topNum;
                 }
 
-                /*
-                   gameStep:
-                   0 = Prêt (aucun dé lancé)
-                   1 = Dés blancs lancés
-                   2 = Le dé gris est en cours / lancé
-                   3 = Tour terminé (résultat final affiché)
-                   4 = Chouette obtenue -> En attente de la tentative de relance du dé différent
-                   5 = Relance du dé différent effectuée -> En attente de l'évaluation finale
-                */
                 let gameStep = 0; 
                 let whiteDiceStopped = false;
-                let dieToReRollIndex = -1; // Index du dé à relancer en cas de Chouette
+                let dieToReRollIndex = -1;
 
                 function getChouettePoints(val) {
                     const points = { 1: 1, 2: 4, 3: 9, 4: 16, 5: 25, 6: 36 };
@@ -382,29 +412,27 @@
                     const sorted = [d1, d2, d3].sort((x, y) => x - y);
                     const [s1, s2, s3] = sorted;
 
-                    // Si nous sortons d'une tentative de relance de Chouette
                     if (gameStep === 5) {
                         if (s1 === s2 && s2 === s3) {
                             const pts = getCulDeChouettePoints(s1);
-                            resultDisplay.textContent = `SIROTAGE RÉUSSI ! 🎉 (${d1}-${d2}-${d3})\n+${pts} pts`;
+                            resultText.textContent = `SIROTAGE RÉUSSI ! 🎉 (${d1}-${d2}-${d3})\n+${pts} pts`;
                         } else {
-                            resultDisplay.textContent = `Sirotage échoué ! ❌ (${d1}-${d2}-${d3})\nVous perdez votre Chouette (0 pt)`;
+                            resultText.textContent = `Sirotage échoué ! ❌ (${d1}-${d2}-${d3})\nVous perdez votre Chouette (0 pt)`;
                         }
-                        gameStep = 3; // Fin du tour
+                        gameStep = 3;
                         dieToReRollIndex = -1;
                         return;
                     }
 
-                    // Détection normale lors du premier lancer complet
                     if (s1 === s2 && s2 === s3) {
                         const pts = getCulDeChouettePoints(s1);
-                        resultDisplay.textContent = `CUL DE CHOUETTE ! (${d1}-${d2}-${d3})\n+${pts} pts`;
+                        resultText.textContent = `CUL DE CHOUETTE ! (${d1}-${d2}-${d3})\n+${pts} pts`;
                         gameStep = 3;
                         return;
                     }
 
                     if (s1 === 1 && s2 === 2 && s3 === 4) {
-                        resultDisplay.textContent = `Souflette (${d1}-${d2}-${d3})\n 👉 En garde ma mignonne !`;
+                        resultText.textContent = `Souflette (${d1}-${d2}-${d3})\n 👉 En garde ma mignonne !`;
                         gameStep = 3;
                         return;
                     }
@@ -417,7 +445,7 @@
 
                     if (cvFound) {
                         const pts = getVelutePoints(cvSum);
-                        resultDisplay.textContent = `Chouette-Velute (${d1}-${d2}-${d3})\n 👏Pas mou le caillou ! Le 1er gagne(+${pts} pts)`;
+                        resultText.textContent = `Chouette-Velute (${d1}-${d2}-${d3})\n 👏Pas mou le caillou ! Le 1er gagne(+${pts} pts)`;
                         gameStep = 3;
                         return;
                     }
@@ -429,7 +457,7 @@
                             const velPts = getVelutePoints(3);
                             scoreText = `-10 pts et Velute (+${velPts} pts)`;
                         }
-                        resultDisplay.textContent = `Suite${isVelute123 ? " & Velute" : ""} (${d1}-${d2}-${d3})\n ✊ Grelotte ça picote ! Le dernier perd (${scoreText})`;
+                        resultText.textContent = `Suite${isVelute123 ? " & Velute" : ""} (${d1}-${d2}-${d3})\n ✊ Grelotte ça picote ! Le dernier perd (${scoreText})`;
                         gameStep = 3;
                         return;
                     }
@@ -441,23 +469,23 @@
 
                     if (veluteSum > 0) {
                         const pts = getVelutePoints(veluteSum);
-                        resultDisplay.textContent = `Velute (${d1}-${d2}-${d3})\n+${pts} pts`;
+                        resultText.textContent = `Velute (${d1}-${d2}-${d3})\n+${pts} pts`;
                         gameStep = 3;
                         return;
                     }
 
-                    // Cas d'une Chouette : 2 dés identiques
                     if (d1 === d2 || d1 === d3 || d2 === d3) {
                         let pairVal = (d1 === d2 || d1 === d3) ? d1 : d2;
                         const pts = getChouettePoints(pairVal);
                         dieToReRollIndex = getDifferentDieIndex(d1, d2, d3);
                         
-                        resultDisplay.textContent = `Chouette (${d1}-${d2}-${d3}) : ${pts} pts\nTenter un sirotage ?`;
-                        gameStep = 4; // Attente de la tentative
+                        resultText.textContent = `Chouette (${d1}-${d2}-${d3}) : ${pts} pts\nSirotage ?`;
+                        sirotageButtons.style.display = 'flex';
+                        gameStep = 4;
                         return;
                     }
 
-                    resultDisplay.textContent = `Néant (${d1}-${d2}-${d3})\nVous obtenez une grelottine si votre score est de minimum 30 pts`;
+                    resultText.textContent = `Néant (${d1}-${d2}-${d3})\nVous obtenez une grelottine si votre score est de minimum 30 pts`;
                     gameStep = 3;
                 }
 
@@ -465,7 +493,7 @@
                     playDiceImpact();
                     whiteDiceStopped = false;
                     dieToReRollIndex = -1;
-                    resultDisplay.textContent = "LANCER DES DEUX CHOUETTES";
+                    resultText.textContent = "LANCER DES DEUX CHOUETTES";
                     [diceList[0], diceList[1]].forEach((die, i) => {
                         if (die.physicsImpostor) {
                             die.physicsImpostor.mass = 1;
@@ -479,7 +507,7 @@
 
                 function rollSingleDie(dieIndex) {
                     playDiceImpact();
-                    resultDisplay.textContent = "TENTATIVE EN COURS...";
+                    resultText.textContent = "TENTATIVE EN COURS...";
                     const die = diceList[dieIndex];
                     if (die && die.physicsImpostor) {
                         die.physicsImpostor.mass = 1;
@@ -492,7 +520,7 @@
 
                 function rollGreyDie() {
                     playDiceImpact();
-                    resultDisplay.textContent = "LANCER DU CUL DE CHOUETTE...";
+                    resultText.textContent = "LANCER DU CUL DE CHOUETTE...";
                     
                     if (diceList.length < 3) {
                         spawnDie(true, 3.8, rotForSix);
@@ -510,7 +538,8 @@
                 }
 
                 function clearBoard() {
-                    resultDisplay.textContent = "Lancez les dés !";
+                    resultText.textContent = "Lancez les dés !";
+                    sirotageButtons.style.display = 'none';
                     whiteDiceStopped = false;
                     dieToReRollIndex = -1;
                     if (diceList.length >= 3) {
@@ -530,6 +559,23 @@
                     });
                 }
 
+                btnYes.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (gameStep === 4 && dieToReRollIndex !== -1) {
+                        sirotageButtons.style.display = 'none';
+                        gameStep = 5;
+                        rollSingleDie(dieToReRollIndex);
+                    }
+                });
+
+                btnNo.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (gameStep === 4) {
+                        clearBoard();
+                        gameStep = 0;
+                    }
+                });
+
                 let checkTimeout = null;
                 scene.registerBeforeRender(() => {
                     diceList.forEach((die, index) => {
@@ -544,7 +590,6 @@
                         }
                     });
 
-                    // Immobilisation des dés blancs à l'étape 1
                     if (gameStep === 1 && !whiteDiceStopped) {
                         let whitesStopped = true;
                         [diceList[0], diceList[1]].forEach(die => {
@@ -574,7 +619,6 @@
 
                     if ((gameStep !== 2 && gameStep !== 5) || diceList.length < 3) return;
 
-                    // Vérifier l'arrêt complet de tous les dés
                     let allStopped = true;
                     diceList.forEach((die) => {
                         if (die.physicsImpostor) {
@@ -594,7 +638,6 @@
                             checkTimeout = setTimeout(() => {
                                 updateCombinationResult();
                                 
-                                // Geler TOUS les dés une fois stabilisés
                                 diceList.forEach(d => {
                                     if (d.physicsImpostor) {
                                         d.physicsImpostor.setLinearVelocity(BABYLON.Vector3.Zero());
@@ -622,12 +665,6 @@
                     } else if (gameStep === 1) {
                         rollGreyDie();
                         gameStep = 2;
-                    } else if (gameStep === 4) {
-                        // Relance unique du dé différent
-                        if (dieToReRollIndex !== -1) {
-                            gameStep = 5;
-                            rollSingleDie(dieToReRollIndex);
-                        }
                     } else if (gameStep === 3) {
                         clearBoard();
                         gameStep = 0;
