@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cul De Chouette ! - Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            width: 100vw;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            background-color: #120a06;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            font-family: 'Cinzel Decorative', serif;
+        }
+
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            margin-top: -60px;
+        }
+
+        .welcome-img {
+            max-width: 75vw;
+            max-height: 42vh;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(184, 134, 11, 0.3);
+            object-fit: contain;
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+            width: 80%;
+            align-items: center;
+        }
+
+        .btn-link {
+            width: 100%;
+            padding: 12px 20px;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #120a06;
+            background: linear-gradient(135deg, #e6c594, #b8860b);
+            border: 2px solid #e6c594;
+            border-radius: 12px;
+            text-decoration: none;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 15px rgba(230, 197, 148, 0.4);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .btn-link:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 25px rgba(230, 197, 148, 0.7);
+            background: linear-gradient(135deg, #f0d5ab, #d49b13);
+        }
+
+        .btn-link:active {
+            transform: scale(0.98);
+        }
+
+        .btn-rules {
+            background: linear-gradient(135deg, #3b2211, #1d1007);
+            color: #e6c594;
+            border: 2px solid rgba(230, 197, 148, 0.6);
+        }
+
+        .btn-rules:hover {
+            background: linear-gradient(135deg, #523119, #2c190b);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="welcome-container">
+        <!-- Image d'accueil -->
+        <img src="44058.jpg" alt="Cul De Chouette" class="welcome-img">
+        
+        <!-- Conteneur des boutons -->
+        <div class="buttons-container">
+            <!-- Lien vers le jeu -->
+            <a href="https://djsteph974.github.io/Cul-de-Chouette/jeu.html" class="btn-link">Jouer</a>
+
+            <!-- Lien pointant vers le viewer Google Docs avec l'URL raw de GitHub pour l'affichage direct -->
+            <a href="https://docs.google.com/viewer?url=https://raw.githubusercontent.com/djsteph974/Cul-de-Chouette/main/R%C3%A8gles%20de%20jeu%20-%20Cul%20de%20Chouette.pdf&embedded=true" target="_blank" rel="noopener noreferrer" class="btn-link btn-rules">Règles du jeu</a>
+        </div>
+    </div>
+
+</body>
+</html>
