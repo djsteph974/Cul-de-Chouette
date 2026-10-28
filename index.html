@@ -8,9 +8,10 @@
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 10px;
             width: 100vw;
             height: 100vh;
+            box-sizing: border-box;
             overflow: hidden;
             background-color: #120a06;
             display: flex;
@@ -27,50 +28,80 @@
             align-items: center;
             justify-content: center;
             text-align: center;
+            width: 100%;
+            max-width: 500px;
+            margin-top: -60px;
         }
 
         .welcome-img {
-            max-width: 85vw;
-            max-height: 65vh;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(184, 134, 11, 0.3);
+            max-width: 75vw;
+            max-height: 42vh;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(184, 134, 11, 0.3);
             object-fit: contain;
         }
 
-        .play-link {
-            margin-top: 35px;
-            padding: 15px 50px;
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+            width: 80%;
+            align-items: center;
+        }
+
+        .btn-link {
+            width: 100%;
+            padding: 12px 20px;
             font-family: 'Cinzel Decorative', serif;
-            font-size: 1.8rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: #120a06;
             background: linear-gradient(135deg, #e6c594, #b8860b);
             border: 2px solid #e6c594;
             border-radius: 12px;
             text-decoration: none;
+            box-sizing: border-box;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 15px rgba(230, 197, 148, 0.4);
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
 
-        .play-link:hover {
-            transform: scale(1.05);
+        .btn-link:hover {
+            transform: scale(1.03);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 25px rgba(230, 197, 148, 0.7);
             background: linear-gradient(135deg, #f0d5ab, #d49b13);
         }
 
-        .play-link:active {
+        .btn-link:active {
             transform: scale(0.98);
+        }
+
+        .btn-rules {
+            background: linear-gradient(135deg, #3b2211, #1d1007);
+            color: #e6c594;
+            border: 2px solid rgba(230, 197, 148, 0.6);
+        }
+
+        .btn-rules:hover {
+            background: linear-gradient(135deg, #523119, #2c190b);
+            color: #ffffff;
         }
     </style>
 </head>
 <body>
 
     <div class="welcome-container">
-        <!-- Remplacez "44058.jpg" par le nom exact de votre image[span_1](start_span)[span_1](end_span) -->
-        <img src="44058.jpg" alt="Cul De Chouette" class="welcome-img">
+        <!-- Image d'accueil -->
+        <img src="44058.jpg" alt="Cul De Chouette" class="welcome-img">[span_0](start_span)[span_0](end_span)
         
-        <!-- Le lien qui pointe vers votre page de jeu -->
-        <a href="jeu.html" class="play-link">Jouer</a>
+        <!-- Conteneur des boutons -->
+        <div class="buttons-container">
+            <!-- Lien vers le jeu -->
+            <a href="https://djsteph974.github.io/Cul-de-Chouette/jeu.html" class="btn-link">Jouer</a>
+
+            <!-- Lien via le lecteur PDF de Mozilla (PDF.js) hébergé en ligne pour forcer l'affichage dans le navigateur -->
+            <a href="https://mozilla.github.io/pdf.js/web/viewer.html?file=https://raw.githubusercontent.com/djsteph974/Cul-de-Chouette/main/R%C3%A8gles%20de%20jeu%20-%20Cul%20de%20Chouette.pdf" target="_blank" rel="noopener noreferrer" class="btn-link btn-rules">Règles du jeu</a>
+        </div>
     </div>
 
 </body>
