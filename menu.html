@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cul De Chouette ! - Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #120a06;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            font-family: 'Cinzel Decorative', serif;
+        }
+
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .welcome-img {
+            max-width: 85vw;
+            max-height: 65vh;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(184, 134, 11, 0.3);
+            object-fit: contain;
+        }
+
+        .play-link {
+            margin-top: 35px;
+            padding: 15px 50px;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #120a06;
+            background: linear-gradient(135deg, #e6c594, #b8860b);
+            border: 2px solid #e6c594;
+            border-radius: 12px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 15px rgba(230, 197, 148, 0.4);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .play-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 25px rgba(230, 197, 148, 0.7);
+            background: linear-gradient(135deg, #f0d5ab, #d49b13);
+        }
+
+        .play-link:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="welcome-container">
+        <!-- Remplacez "44058.jpg" par le nom exact de votre image[span_1](start_span)[span_1](end_span) -->
+        <img src="44058.jpg" alt="Cul De Chouette" class="welcome-img">
+        
+        <!-- Le lien qui pointe vers votre page de jeu -->
+        <a href="https://djsteph974.github.io/Cul-de-Chouette/jeu.html" class="play-link">Jouer</a>
+    </div>
+
+</body>
+</html>
